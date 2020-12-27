@@ -7,12 +7,15 @@ import (
 	"os"
 	"net/http"
 
+	"github.com/nicodina/snippetbox/pkg/models/mysql"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type application struct {
 	errLog *log.Logger
 	infoLog *log.Logger
+	snippets *mysql.SnippetService
 }
 
 func main() {
@@ -34,6 +37,7 @@ func main() {
 	app := &application{
 		errLog: errLog,
 		infoLog: infoLog,
+		snippets: &mysql.SnippetService{DB: db},
 	}
 
 	// Let's define a custom http server with its
