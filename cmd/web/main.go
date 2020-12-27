@@ -25,20 +25,12 @@ func main() {
 		infoLog: infoLog,
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
-
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
-
 	// Let's define a custom http server with its
 	// address, logger and handler
 	srv := &http.Server {
 		Addr: *addr,
 		ErrorLog: errLog,
-		Handler: mux,
+		Handler: app.routes(),
 	}
 
 	infoLog.Println("Starting server on ", *addr)
