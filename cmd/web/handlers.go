@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	"html/template"
+	//"html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/nicodina/snippetbox/pkg/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request){
@@ -13,7 +15,17 @@ func (app *application) home(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	files := []string{
+	snippets, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%v", snippet)
+	}
+
+	/*files := []string{
 		"./ui/html/home.page.html",
 		"./ui/html/base.layout.html",
 		"./ui/html/footer.partial.html",
@@ -27,7 +39,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request){
 	err = t.Execute(w, nil)
 	if err != nil {
 		app.serverError(w, err)
-	}
+	}*/
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
@@ -36,7 +48,17 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
 		app.notFound(w)
 		return
 	}
-	fmt.Fprintf(w, "Display specific snippet with ID %d", id)
+
+	snippet, err := app.snippets.Get(id)
+	if err == models.ErrNoRecord {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "%v", snippet)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request){

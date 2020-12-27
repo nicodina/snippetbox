@@ -34,6 +34,9 @@ func main() {
 	}
 	defer db.Close()
 
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(10)
+
 	app := &application{
 		errLog:   errLog,
 		infoLog:  infoLog,
