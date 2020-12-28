@@ -1,10 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
-	"bytes"
+	"time"
 )
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
@@ -16,12 +17,20 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 
 	// Let's first write into a buffer to catch possible errors
 	buff := new(bytes.Buffer)
-	err := ts.Execute(buff, td)
+	err := ts.Execute(buff, app.addDefaultData(td, r))
 	if err != nil {
 		app.serverError(w, err)
 	}
 
 	buff.WriteTo(w)
+}
+
+func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+	if td == nil {
+		td = &templateData{}
+	}
+	td.CurrentYear = time.Now().Year()
+	return td
 }
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
