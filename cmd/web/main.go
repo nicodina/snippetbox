@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ type application struct {
 	errLog   *log.Logger
 	infoLog  *log.Logger
 	snippets *mysql.SnippetService
+	temaplateCache map[string]*template.Template
 }
 
 func main() {
@@ -37,10 +39,17 @@ func main() {
 	db.SetMaxOpenConns(50)
 	db.SetMaxIdleConns(10)
 
+	// Load templates into the cache
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errLog.Fatal(err)
+	}
+
 	app := &application{
 		errLog:   errLog,
 		infoLog:  infoLog,
 		snippets: &mysql.SnippetService{DB: db},
+		temaplateCache: templateCache,
 	}
 
 	// Let's define a custom http server with its
