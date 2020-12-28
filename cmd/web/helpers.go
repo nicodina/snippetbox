@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"bytes"
 )
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
@@ -13,10 +14,14 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 
-	err := ts.Execute(w, td)
+	// Let's first write into a buffer to catch possible errors
+	buff := new(bytes.Buffer)
+	err := ts.Execute(buff, td)
 	if err != nil {
 		app.serverError(w, err)
 	}
+
+	buff.WriteTo(w)
 }
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
