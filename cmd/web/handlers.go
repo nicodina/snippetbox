@@ -41,16 +41,23 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request){
-	w.Write([]byte("Create a new snippet ..."))
+	app.render(w, r, "create.page.html", nil)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request){
 
-	// Example of a new snippet
-	title := "0 Snails"
-	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi"
-	expires := "7"
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
+	// Retrieving form data
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+	expires := r.PostForm.Get("expires")
+
+	// Create a new snippet in the database
 	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
 		app.serverError(w, err)
