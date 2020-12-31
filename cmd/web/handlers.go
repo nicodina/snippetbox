@@ -9,7 +9,7 @@ import (
 	"github.com/nicodina/snippetbox/pkg/models"
 )
 
-func (app *application) home(w http.ResponseWriter, r *http.Request){
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -22,7 +22,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request){
 	})
 }
 
-func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
+func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
@@ -43,13 +43,13 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
 	})
 }
 
-func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request){
+func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "create.page.html", &templateData{
 		Form: forms.NewForm(nil),
 	})
 }
 
-func (app *application) createSnippet(w http.ResponseWriter, r *http.Request){
+func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
@@ -82,11 +82,45 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request){
 }
 
 func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Signup user form ...")
+	app.render(w, r, "signup.page.html", &templateData{
+		Form: forms.NewForm(nil),
+	})
 }
 
 func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Signup user ...")
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := forms.NewForm(r.PostForm)
+	form.Required("name", "email", "password")
+	form.MatchesPattern("email", forms.EmailRX)
+	form.MinLength("password", 10)
+
+	if !form.Valid() {
+		app.render(w, r, "signup.page.html", &templateData{
+			Form: form,
+		})
+		return
+	}
+
+	err = app.users.Insert(form.Get("name"), form.Get("email"), form.Get("password"))
+	if err == models.ErrDuplicateEmail {
+		form.Errors.Add("email", "Duplicate email")
+		app.render(w, r, "signup.page.html", &templateData{
+			Form: form,
+		})
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.session.Put(r, "flash", "Your registration was succesfull. Please login \n")
+
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
 func (app *application) loginUserForm(w http.ResponseWriter, r *http.Request) {
