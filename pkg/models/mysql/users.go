@@ -61,5 +61,18 @@ func (s *UsersService) Authenticate(email, password string) (int, error) {
 
 // Get retrieves a specific user from the database
 func (s *UsersService) Get(id int) (*models.User, error) {
-	return nil, nil
+
+	user := &models.User{}
+
+	stmt := `SELECT id, name, email, created FROM users WHERE id = ?`
+	row := s.DB.QueryRow(stmt, id)
+	
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Created)
+	if err == sql.ErrNoRows {
+		return nil, models.ErrNoRecord
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
