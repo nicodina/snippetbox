@@ -10,6 +10,7 @@ import (
 )
 
 type templateData struct {
+	AuthenticatedUser int
 	CurrentYear int
 	Form *forms.Form
 	Flash string
