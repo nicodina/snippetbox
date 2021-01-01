@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/nicodina/snippetbox/pkg/models"
 	"github.com/nicodina/snippetbox/pkg/models/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -24,9 +25,17 @@ type application struct {
 	errLog   *log.Logger
 	infoLog  *log.Logger
 	session *sessions.Session
-	users *mysql.UsersService
-	snippets *mysql.SnippetService
-	temaplateCache map[string]*template.Template
+	templateCache map[string]*template.Template
+	users interface {
+		Insert(string, string, string) error
+		Authenticate(string, string) (int, error)
+		Get(int) (*models.User, error)
+	}
+	snippets interface {
+		Insert(string, string, string) (int, error)
+		Get(int) (*models.Snippet, error)
+		Latest() ([]*models.Snippet, error)
+	}
 }
 
 func main() {
@@ -65,7 +74,7 @@ func main() {
 		session: session,
 		users: &mysql.UsersService{DB: db},
 		snippets: &mysql.SnippetService{DB: db},
-		temaplateCache: templateCache,
+		templateCache: templateCache,
 	}
 
 	tlsConfig := &tls.Config{
